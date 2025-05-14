@@ -1,0 +1,180 @@
+/* === RESET / LAYOUT === */
+body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1;
+    padding: 2em;
+}
+
+footer {
+    background-color: #eee;
+    text-align: center;
+    padding: 1em;
+    font-size: 0.9em;
+    color: #555;
+}
+
+
+/* === HEADER & NAVIGATION === */
+.header-container {
+    padding: 1.5em 2em 0.5em 2em;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 1em;
+}
+
+.app-title {
+    font-size: 1.6em;
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 0.4em;
+}
+
+.simple-nav {
+    display: flex;
+    gap: 1.5em;
+    padding-left: 2px;
+}
+
+.simple-nav a {
+    font-weight: 500;
+    color: #777;
+    text-decoration: none;
+    font-size: 0.95em;
+    transition: color 0.2s ease;
+}
+
+.simple-nav a:hover {
+    color: #222;
+}
+
+
+/* === FORM === */
+form {
+    background: white;
+    padding: 2em;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+form label {
+    display: block;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+    color: #333;
+}
+
+form input,
+form textarea,
+form select {
+    width: 100%;
+    padding: 0.6em;
+    margin-bottom: 1.2em;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #fafafa;
+    font-size: 1em;
+    box-sizing: border-box;
+    transition: border 0.2s ease;
+}
+
+
+form textarea {
+    resize: vertical;
+}
+
+form input:focus,
+form textarea:focus,
+form select:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+.btn {
+    display: inline-block;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 0.75em 1.5em;
+    font-size: 1em;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+.btn:hover {
+    background-color: #0056b3;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+}
+
+.btn-danger:hover {
+    background-color: #bd2130;
+}
+
+
+.inline-link {
+    color: #007bff; /* klasyczny niebieski */
+    text-decoration: none; /* brak podkreślenia */
+    font-weight: 500; /* lekko pogrubiony */
+    transition: color 0.2s ease, border-bottom 0.2s ease;
+    border-bottom: 1px solid transparent; /* delikatny efekt */
+}
+
+.inline-link:hover {
+    color: #0056b3; /* ciemniejszy niebieski przy hoverze */
+    border-bottom: 1px solid #0056b3; /* efekt lekkiego podkreślenia */
+}
+
+
+/* === TRANSCRIPTION BOX === */
+.transcription-container {
+    background-color: #ffffff;
+    padding: 2em;
+    margin: 2em auto;
+    max-width: 800px;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.transcription-heading {
+    font-size: 1.5em;
+    margin-bottom: 1em;
+    color: #333;
+    text-align: center;
+}
+
+.transcription-box {
+    width: 100%;
+    height: 300px;
+    padding: 1em;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #fafafa;
+    font-family: monospace;
+    font-size: 0.95em;
+    line-height: 1.4;
+    resize: vertical;
+    box-sizing: border-box;
+    color: #333;
+}

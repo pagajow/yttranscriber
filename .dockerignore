@@ -1,0 +1,70 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pkl
+
+# Django files
+*.sqlite3
+*.log
+db.sqlite3
+media/
+staticfiles/
+audio_files/
+
+# Environment
+.env
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.history/
+.idea/              
+*.code-workspace    
+*.swp               
+*.bak                
+*.tmp
+
+
+# System (Windows, macOS itp.)
+.DS_Store
+Thumbs.db
+desktop.ini
+*.~lock.*           # LibreOffice lock files
+*.log.*
+
+
+# Tests
+.coverage
+htmlcov/
+.coverage.*
+
+# mypy / linters
+.mypy_cache/
+.pytest_cache/
+.tox/
+*.cover
+.cache/
+
+# Git
+*.orig
+
+# Build
+build/
+dist/
+*.egg-info/
+
+# Node/npm 
+node_modules/
+npm-debug.log
+yarn-error.log
+
+
+
+yt*.tar
+backups/

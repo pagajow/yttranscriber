@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+
+
+{% block header %}Summarize or ask AI a question about the transcription{% endblock %}
+
+{% block content %}
+    {% if openai_api_key_present %}
+        <form method="post" action="{% url 'transcriberapp:request_summary' transcription.pk %}">
+            {% csrf_token %}
+            {{ summary_form.as_p }}
+            <button class="btn" type="submit">Ask AI</button>
+        </form>
+    {% else %}
+        <p>Unable to ask AI a question because the OpenAI API key is not available.</p>
+    {% endif %}
+{% endblock %}

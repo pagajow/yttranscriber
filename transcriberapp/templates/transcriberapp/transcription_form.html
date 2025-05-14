@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+
+{% block header %}Transcribe YouTube video{% endblock %}
+
+{% block content %}
+    <form method="post" id="transcription-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn" type="submit" id="submit-btn">
+            {{ submit_label|default:"Transcribe" }}
+        </button>
+    </form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("transcription-form");
+        const submitBtn = document.getElementById("submit-btn");
+
+        if (form && submitBtn) {
+            form.addEventListener("submit", function () {
+                submitBtn.disabled = true;
+                submitBtn.innerText = "Processing...";
+            });
+        }
+    });
+</script>
+{% endblock %}

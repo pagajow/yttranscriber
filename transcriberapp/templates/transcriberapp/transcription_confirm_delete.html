@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+
+{% block header %}Are you sure you want to delete this transcription?{% endblock %}
+
+{% block content %}
+<div class="transcription-delete">
+    <form method="post">
+        <p>({{object.created_at}}) {{ object.url }}</p>
+        {% csrf_token %}
+        <button class="btn btn-danger" type="submit">Delete</button>
+        <a class="btn btn-secondary" href="{% url 'transcriberapp:transcription_detail' object.pk %}">Cancel</a>
+    </form>
+</div>
+{% endblock %}

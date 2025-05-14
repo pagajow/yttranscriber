@@ -1,0 +1,40 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}YouTube Transcription{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+
+    {% block extra_css %}
+    <!-- additional styles -->
+    {% endblock %}
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <h1 class="app-title">{% block header %}YouTube Transcription Application{% endblock %}</h1>
+            <nav class="simple-nav">
+            <a href="{% url 'transcriberapp:transcribe' %}">Home</a>
+            <a href="{% url 'transcriberapp:transcription_list' %}">Transcriptions</a>
+            </nav>
+        </div>
+    </header>
+
+
+    <main>
+        {% block content %}
+        <!-- specific page content -->
+        {% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; {{ now|default:"2025" }} - YTTranscriber</p>
+    </footer>
+
+    {% block extra_js %}
+    <!-- additional JS scripts -->
+    {% endblock %}
+</body>
+</html>

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load static %}
+{% load markdown_extras %}
+
+
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'transcriberapp/css/transcription_detail.css' %}">
+{% endblock %}
+
+{% block header %}Video Transcription{% endblock %}
+
+{% block content %}
+    <div class="transcription-container">
+        <p><strong>Language:</strong> {{ object.language }}</p>
+        <p><strong>Source:</strong> <a  class="inline-link" href="{{ object.url }}" target="_blank">{{ object.url }}</a></p>
+
+        <div class="transcription-actions">
+            {% if openai_api_key_present%}
+                <a href="{% url 'transcriberapp:ask_ai' object.pk %}" >Ask AI</a>
+            {% endif %}
+            <a href="#" onclick="copyToClipboard(); return false;">Copy</a>
+            <a href="#" onclick="downloadAsTxt(); return false;">Download</a>
+            <a href="{% url 'transcriberapp:transcription_edit' object.pk %}">Edit</a>
+            <a href="{% url 'transcriberapp:transcription_delete' object.pk %}">Delete</a>
+        </div>
+
+        <div class="transcription-box-scroll markdown-box">
+            <h3>Transcription</h3>
+            <div id="transcription-text" >{{ object.text|markdownify }}</div>
+        </div>
+
+        {% if object.summary %}
+            <div class="transcription-actions">
+                <a href="#" onclick="copySummaryToClipboard(); return false;">Copy</a>
+                <a href="#" onclick="downloadSummaryAsTxt(); return false;">Download</a>
+            </div>
+            <div class="transcription-box-scroll markdown-box">
+                <h3>Summary</h3>
+                <div id="summary-text">{{ object.summary|markdownify }}</div>
+            </div>
+        {% endif %}
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'transcriberapp/js/transcription_detail.js' %}"></script>
+{% endblock %}
