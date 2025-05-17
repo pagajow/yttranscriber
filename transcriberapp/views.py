@@ -2,23 +2,107 @@ import glob
 import os
 import uuid
 import re
+
 from openai import OpenAI
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic.edit import FormView
 from django.views.generic import ListView, DetailView, DeleteView, UpdateView, TemplateView
 
 from transcriberapp.forms import SummaryRequestForm, TranscriptionForm, TranscriptionRequestForm
-from transcriberapp.models import Transcription
+from transcriberapp.models import AsyncTask, AsyncTaskLog, Transcription
 from transcriberapp.transcription import download_audio, transcribe_audio
 
 import threading
+from typing import Any, Callable
+
+from django.conf import settings
 
 transcription_lock = threading.Lock()
 
 # Create your views here.
+
+def async_transcription(task: AsyncTask, url:str, lang:str, callback: Callable[[AsyncTaskLog], Any]=None):
+    try:
+        base_path = f"{settings.MEDIA_FOLDER}/{task.task_id}"
+        transcription: Transcription = task.transcription
+        
+        log = task.logs.create(
+            message=f"Tramscription task started for URL: {url}",
+            status="pending",
+        )
+        if callback:
+            callback(log)
+        
+        info = download_audio(url, base_path)
+        if not info.get("success", False):
+            log = task.logs.create(
+                message=info.get("error", "Unknown download error"),
+                status="failed",
+            )
+            if callback:
+                callback(log)
+            return
+            
+        audio_path = info.get("file_path", None)
+        thumbnail = info.get("thumbnail", None)
+        title = info.get("title", None)
+        duration = info.get("duration", None)
+        
+        transcription.title = title
+        transcription.duration = duration
+        transcription.thumbnail = thumbnail
+        transcription.save()
+        
+        log = task.logs.create(
+            message="Audio downloaded successfully",
+            status="in_progress",
+        )
+        if callback:
+            callback(log)
+        
+        result = transcribe_audio(audio_path, lang)
+        if not result.get("success", False):
+            log = task.logs.create(
+                message=result.get("error", "Unknown transcription error"),
+                status="failed",
+            )
+            if callback:
+                callback(log)
+            return
+
+        transcription.text = result.get("text", "")
+        transcription.save()
+        
+        log = task.logs.create(
+            message="Transcription completed successfully",
+            status="in_progress",
+        )
+        if callback:
+            callback(log)
+
+        files = []
+        for f in glob.glob(f"{base_path}*"):
+            files.append(f)
+            os.remove(f)
+        log = task.logs.create(
+            message=f"Downloaded ({len(files)}) files removed.",
+            status="completed",
+        )
+        if callback:
+            callback(log)
+    except Exception as e:
+        log = task.logs.create(
+            message=str(e),
+            status="failed",
+        )
+        if callback:
+            callback(log)
+    finally:
+        transcription_lock.release()
+
 class TranscriptionView(FormView):
     template_name = "transcriberapp/transcription_form.html"
     form_class = TranscriptionRequestForm
@@ -30,47 +114,28 @@ class TranscriptionView(FormView):
 
         url = form.cleaned_data["url"]
         lang = form.cleaned_data["language"]
+        transcription = Transcription.objects.create(url=url, language=lang)
+        task = transcription.tasks.create(task_id=uuid.uuid4().hex, status="pending", task_type="transcription")
 
-        def process_task(url, lang):
-            try:
-                uid = uuid.uuid4().hex
-                base_path = f"audio_files/{uid}"
-                audio_path = download_audio(url, base_path)
-                text = transcribe_audio(audio_path, lang)
+        threading.Thread(target=async_transcription, args=(task, url, lang)).start()
 
-                Transcription.objects.create(
-                    url=url,
-                    language=lang,
-                    text=text,
-                    summary="",
-                )
-
-                for f in glob.glob(f"{base_path}*"):
-                    os.remove(f)
-            except Exception as e:
-                print(f"Error during transcription: {e}")
-            finally:
-                transcription_lock.release()
-
-        threading.Thread(target=process_task, args=(url, lang)).start()
-
-        return redirect("transcriberapp:transcription_in_process")
+        return redirect("transcriberapp:transcription_detail", pk=transcription.pk)
         
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["submit_label"] = "Transcribe"
         return context        
+            
+             
+def async_summary(task: AsyncTask, user_prompt:str, language_code:str, model:str, callback: Callable[[AsyncTaskLog], Any]=None):
+    transcription: Transcription = task.transcription
+    log = task.logs.create(
+        message=f"AI request task started for transcription ID: {transcription.pk}",
+        status="pending",
+    )
+    if callback:
+        callback(log)
     
-    def get_embed_yt_url(self, youtube_url):
-        match = re.search(r"(?:v=|youtu\.be/)([a-zA-Z0-9_-]{11})", youtube_url)
-        if match:
-            video_id = match.group(1)
-            return f"https://www.youtube.com/embed/{video_id}?rel=0&modestbranding=1"
-        return None
-            
-            
-            
-def async_summary(transcription, user_prompt, language_code, model):
     prompt_content = (
         f"User's request: {user_prompt}\n\n"
         f"Please respond in the language: {language_code}.\n"
@@ -90,14 +155,26 @@ def async_summary(transcription, user_prompt, language_code, model):
         summary_text = response.choices[0].message.content
         transcription.summary = summary_text
         transcription.save()
-
+        
+        log = task.logs.create(
+            message=f"AI request completed successfully with a response of {len(summary_text)} characters",
+            status="completed",
+        )
+        if callback:
+            callback(log)
     except Exception as e:
-        print(f"Failed to get summary from OpenAI: {e}")
+        log = task.logs.create(
+            message=f"AI request failed: {str(e)}",
+            status="failed",
+        )
+        if callback:
+            callback(log)
                     
 class RequestSummaryView(View):
     def post(self, request, pk):
         form = SummaryRequestForm(request.POST)
         transcription = get_object_or_404(Transcription, pk=pk)
+        task = transcription.tasks.create(task_id=uuid.uuid4().hex, status="pending", task_type="ai_request")
 
         if not form.is_valid():
             return HttpResponseBadRequest("Invalid form input")
@@ -111,12 +188,33 @@ class RequestSummaryView(View):
 
         thread = threading.Thread(
             target=async_summary,
-            args=(transcription, user_prompt, language, model),
+            args=(task, user_prompt, language, model),
             daemon=True
         )
         thread.start()
 
         return redirect("transcriberapp:transcription_detail", pk=transcription.pk)            
+            
+                     
+def active_tasks_status(request, pk):
+    transcription = get_object_or_404(Transcription, pk=pk)
+    tasks = [task for task in transcription.tasks.order_by("created_at") if not task.is_done]
+
+    data = {}
+    for task in tasks:
+        logs = task.logs.order_by("created_at")
+        
+        data[task.task_id] = {
+            "task_id": task.task_id,
+            "type": task.task_type,
+            "status": task.status,
+            "logs": [{
+                "message": log.message,
+                "status": log.status,  
+                "id": log.pk,
+                } for log in logs],
+        }
+    return JsonResponse(data)           
             
 #-------------------------------------------            
 class TranscriptionListView(ListView):
@@ -134,7 +232,7 @@ class TranscriptionDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["openai_api_key_present"] = "OPENAI_API_KEY" in os.environ
-        context["summary_form"] = SummaryRequestForm()
+        context["active_tasks"] = [task for task in self.object.tasks.order_by("-created_at") if not task.is_done]
         return context
 
 class TranscriptionUpdateView(UpdateView):
@@ -154,8 +252,6 @@ class TranscriptionDeleteView(DeleteView):
     template_name = "transcriberapp/transcription_confirm_delete.html"
     success_url = reverse_lazy("transcriberapp:transcription_list")
     
-class TranscriptionInProcessView(TemplateView):
-    template_name = "transcriberapp/transcription_in_progress.html"
     
 class AskAIView(TemplateView):
     template_name = "transcriberapp/transcription_ask_ai.html"

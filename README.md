@@ -44,7 +44,7 @@ source venv/bin/activate  # Linux/macOS
 ### Required packages:
 
 ```bash
-pip install django yt-dlp openai-whisper torch ffmpeg-python django-environ openai markdown gunicorn
+pip install django yt-dlp openai-whisper torch ffmpeg-python django-environ openai markdown gunicorn channels channels_redis
 python -m pip install --upgrade pip
 ```
 

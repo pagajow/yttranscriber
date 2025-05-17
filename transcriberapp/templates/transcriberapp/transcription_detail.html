@@ -11,9 +11,30 @@
 {% block header %}Video Transcription{% endblock %}
 
 {% block content %}
+    <div id="transcription-id" class="hidden" data-transcription-id="{{object.pk}}" data-active-tasks="{% if active_tasks %}1{% else %}0{% endif %}"></div>
+
+    
     <div class="transcription-container">
+        <div id="active-tasks-box" class="active-tasks-box" hidden></div>
+
         <p><strong>Language:</strong> {{ object.language }}</p>
         <p><strong>Source:</strong> <a  class="inline-link" href="{{ object.url }}" target="_blank">{{ object.url }}</a></p>
+
+        <div class="video-meta-vert">
+            {% if object.title %}
+                <p class="video-title">{{ object.title }}</p>
+            {% endif %}
+
+            {% if object.duration %}
+                <p class="video-duration">Duration: {{ object.duration|floatformat:0 }} s</p>
+            {% endif %}
+
+            {% if object.thumbnail %}
+                <div class="video-thumb-center">
+                    <img src="{{ object.thumbnail }}" alt="Thumbnail of {{ object.title|default:'video' }}">
+                </div>
+            {% endif %}
+        </div>
 
         <div class="transcription-actions">
             {% if openai_api_key_present%}

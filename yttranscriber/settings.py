@@ -143,6 +143,6 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # do collectstatic
 
-
-MEDIA_ROOT = os.path.join(BASE_DIR, 'audio_files')
+MEDIA_FOLDER = 'audio_files'
+MEDIA_ROOT = os.path.join(BASE_DIR, MEDIA_FOLDER)
 MEDIA_URL = '/media/'

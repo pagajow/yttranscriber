@@ -1,3 +1,7 @@
+.hidden {
+    display: none;
+}
+
 /* === RESET / LAYOUT === */
 body {
     font-family: sans-serif;
